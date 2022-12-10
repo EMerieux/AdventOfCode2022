@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+type movement struct {
+	Distance  int
+	Direction string
+}
+
 type element struct {
 	PosX int
 	PosY int
@@ -69,19 +74,37 @@ func check(e error) {
 	}
 }
 
-func main() {
-	f, err := os.Open("input")
-	check(err)
-	defer f.Close()
+func countVisited(visited map[int][]int) int {
+	visitedCount := 0
+	for _, ys := range visited {
+		uys := make(map[int]struct{})
+		for _, y := range ys {
+			uys[y] = struct{}{}
+		}
+		visitedCount += len(uys)
+	}
+	return visitedCount
+}
 
-	fileScanner := bufio.NewScanner(f)
-	fileScanner.Split(bufio.ScanLines)
-
+func part1(movements []movement) {
 	head := element{0, 0}
 	tail := element{0, 0}
 	visited := make(map[int][]int)
 	visited[0] = append(visited[0], 0)
 
+	for _, movement := range movements {
+		for movement.Distance > 0 {
+			movement.Distance -= 1
+			head.move(movement.Direction)
+			tail.follow(head)
+			visited[tail.PosX] = append(visited[tail.PosX], tail.PosY)
+		}
+	}
+
+	fmt.Println("Part 1 - Tail visited: " + strconv.Itoa(countVisited(visited)))
+}
+
+func part2(movements []movement) {
 	n0 := element{0, 0}
 	n1 := element{0, 0}
 	n2 := element{0, 0}
@@ -92,23 +115,15 @@ func main() {
 	n7 := element{0, 0}
 	n8 := element{0, 0}
 	n9 := element{0, 0}
-	visitedStep2 := make(map[int][]int)
-	visitedStep2[0] = append(visitedStep2[0], 0)
+	visited := make(map[int][]int)
+	visited[0] = append(visited[0], 0)
 
-	for fileScanner.Scan() {
-		line := fileScanner.Text()
-		values := strings.Split(line, " ")
-		distance, err := strconv.Atoi(values[1])
-		check(err)
-		direction := values[0]
-
+	for _, movement := range movements {
+		distance := movement.Distance
 		for distance > 0 {
 			distance -= 1
-			head.move(direction)
-			tail.follow(head)
-			visited[tail.PosX] = append(visited[tail.PosX], tail.PosY)
 
-			n0.move(direction)
+			n0.move(movement.Direction)
 			n1.follow(n0)
 			n2.follow(n1)
 			n3.follow(n2)
@@ -118,39 +133,33 @@ func main() {
 			n7.follow(n6)
 			n8.follow(n7)
 			n9.follow(n8)
-			visitedStep2[n9.PosX] = append(visitedStep2[n9.PosX], n9.PosY)
-
-			fmt.Println("Movement: " + line)
-			fmt.Println("N0 [" + strconv.Itoa(n0.PosX) + "," + strconv.Itoa(n0.PosY) + "]")
-			fmt.Println("N1 [" + strconv.Itoa(n1.PosX) + "," + strconv.Itoa(n1.PosY) + "]")
-			fmt.Println("N2 [" + strconv.Itoa(n2.PosX) + "," + strconv.Itoa(n2.PosY) + "]")
-			fmt.Println("N3 [" + strconv.Itoa(n3.PosX) + "," + strconv.Itoa(n3.PosY) + "]")
-			fmt.Println("N4 [" + strconv.Itoa(n4.PosX) + "," + strconv.Itoa(n4.PosY) + "]")
-			fmt.Println("N5 [" + strconv.Itoa(n5.PosX) + "," + strconv.Itoa(n5.PosY) + "]")
-			fmt.Println("N6 [" + strconv.Itoa(n6.PosX) + "," + strconv.Itoa(n6.PosY) + "]")
-			fmt.Println("N7 [" + strconv.Itoa(n7.PosX) + "," + strconv.Itoa(n7.PosY) + "]")
-			fmt.Println("N8 [" + strconv.Itoa(n8.PosX) + "," + strconv.Itoa(n8.PosY) + "]")
-			fmt.Println("N9 [" + strconv.Itoa(n9.PosX) + "," + strconv.Itoa(n9.PosY) + "]")
+			visited[n9.PosX] = append(visited[n9.PosX], n9.PosY)
 		}
 	}
 
-	visitedCount := 0
-	for _, ys := range visited {
-		uys := make(map[int]struct{})
-		for _, y := range ys {
-			uys[y] = struct{}{}
-		}
-		visitedCount += len(uys)
-	}
-	fmt.Println("Tail visited: " + strconv.Itoa(visitedCount))
+	fmt.Println("Part 2 - N9 visited: " + strconv.Itoa(countVisited(visited)))
+}
 
-	visitedStep2Count := 0
-	for _, ys := range visitedStep2 {
-		uys := make(map[int]struct{})
-		for _, y := range ys {
-			uys[y] = struct{}{}
-		}
-		visitedStep2Count += len(uys)
+func main() {
+	f, err := os.Open("input")
+	check(err)
+	defer f.Close()
+
+	fileScanner := bufio.NewScanner(f)
+	fileScanner.Split(bufio.ScanLines)
+
+	movements := make([]movement, 0)
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		values := strings.Split(line, " ")
+		distance, err := strconv.Atoi(values[1])
+		check(err)
+		movements = append(movements, movement{
+			Distance:  distance,
+			Direction: values[0],
+		})
 	}
-	fmt.Println("N9 visited: " + strconv.Itoa(visitedStep2Count))
+
+	part1(movements)
+	part2(movements)
 }
