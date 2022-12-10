@@ -105,16 +105,10 @@ func part1(movements []movement) {
 }
 
 func part2(movements []movement) {
-	n0 := element{0, 0}
-	n1 := element{0, 0}
-	n2 := element{0, 0}
-	n3 := element{0, 0}
-	n4 := element{0, 0}
-	n5 := element{0, 0}
-	n6 := element{0, 0}
-	n7 := element{0, 0}
-	n8 := element{0, 0}
-	n9 := element{0, 0}
+	elements := make([]*element, 0)
+	for i := 0; i < 10; i++ {
+		elements = append(elements, &element{0, 0})
+	}
 	visited := make(map[int][]int)
 	visited[0] = append(visited[0], 0)
 
@@ -122,18 +116,17 @@ func part2(movements []movement) {
 		distance := movement.Distance
 		for distance > 0 {
 			distance -= 1
-
-			n0.move(movement.Direction)
-			n1.follow(n0)
-			n2.follow(n1)
-			n3.follow(n2)
-			n4.follow(n3)
-			n5.follow(n4)
-			n6.follow(n5)
-			n7.follow(n6)
-			n8.follow(n7)
-			n9.follow(n8)
-			visited[n9.PosX] = append(visited[n9.PosX], n9.PosY)
+			nbElements := len(elements)
+			for k, element := range elements {
+				if k == 0 {
+					element.move(movement.Direction)
+				} else {
+					element.follow(*elements[k-1])
+				}
+				if k == nbElements-1 {
+					visited[element.PosX] = append(visited[element.PosX], element.PosY)
+				}
+			}
 		}
 	}
 
